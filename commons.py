@@ -10,6 +10,23 @@ import networkx as nx
 import osmnx as ox
 import plotly.graph_objects as go
 
+CWD = os.getcwd()
+DATA_PATH = os.path.join(CWD, 'data')
+GTFS_PATH = os.path.join(DATA_PATH, 'gtfs')
+GTFS_PATH_UK = os.path.join(DATA_PATH, 'gtfs_uk')
+GTFS_PATH_OTHER = os.path.join(DATA_PATH, 'gtfs_other')
+
+
+########################################################################################
+################### General Functions ##################################################
+########################################################################################
+
+def load_graph(src=GTFS_PATH_OTHER, feed_id=1139, feed_name="DB", start_time=7, end_time=20):
+    feed_path = os.path.join(src, f'{feed_id}.zip')
+    feed = ptr.get_representative_feed(feed_path)
+    graph = ptr.load_feed_as_graph(feed, start_time=start_time * 3600, end_time=end_time * 3600, name=feed_name)
+    return graph
+
 
 def pad_array(array, pad_val=None, step=1, n_pads=1):
     """Pads an array with a value (repeated for n_pads) every n steps"""
@@ -22,6 +39,10 @@ def pad_array(array, pad_val=None, step=1, n_pads=1):
         output[i::step + n_pads] = array[i::step]
     return output
 
+
+########################################################################################
+################### Plotting Functions #################################################
+########################################################################################
 
 def graph_to_dfs(g):
     nodes, edges = ox.graph_to_gdfs(g)
@@ -69,7 +90,7 @@ def plot_graph_map(g, marker_style=None, num_edge_markers=0, **fig_style_kwargs)
     if num_edge_markers != 0:
         edges_markers = edges['geometry'].to_frame().apply(
             lambda row: linestring_to_coords(row.iloc[0], num_edge_markers), axis=1, result_type="expand"
-            ).reset_index().rename(columns={0: "lon", 1: "lat"})
+        ).reset_index().rename(columns={0: "lon", 1: "lat"})
         edges_longs_marker = pad_array(np.concatenate(edges_markers['lon'].values), step=num_edge_markers)
         edges_lats_marker = pad_array(np.concatenate(edges_markers['lat'].values), step=num_edge_markers)
         edges_text_marker = pad_array(edges.index.values.repeat(num_edge_markers), step=num_edge_markers)
@@ -98,21 +119,20 @@ def plot_graph_map(g, marker_style=None, num_edge_markers=0, **fig_style_kwargs)
     return fig
 
 
-def evaluate_graph(graph):
-    """
-    Function to evaluate a graph and return summary statistics, and node dataframe characteristics
+########################################################################################
+################### Graph Evaluation ###################################################
+########################################################################################
 
-    summarize the computations done in graph_evaluation.ipynb
+def nodes_centrality_evaluation(graph, node_df):
     """
-    # Extraction of nodes
-    node_df = pd.DataFrame.from_dict(dict(graph.nodes(data=True)), orient='index')['boarding_cost'].to_frame()
-    node_df.index.name = 'node_id'
-
+    Function to evaluate the centrality of nodes in a graph
+    """
     # Degree
     node_df['degree'] = pd.DataFrame(nx.degree(graph), columns=['node', 'degree']).set_index('node')['degree']
 
     # Centrality
-    centrality_columns = ['centrality_degree', 'centrality_betweenness', 'centrality_closeness', 'centrality_eigenvector']
+    centrality_columns = ['centrality_degree', 'centrality_betweenness', 'centrality_closeness',
+                          'centrality_eigenvector']
     weight = "length"
 
     node_df['centrality_degree'] = node_df['degree'] / node_df['degree'].max()
@@ -122,29 +142,43 @@ def evaluate_graph(graph):
 
     # Centrality scaling
     for centrality in centrality_columns:
-        node_df[centrality] = (node_df[centrality] - node_df[centrality].min()) / (node_df[centrality].max() - node_df[centrality].min())
+        node_df[centrality] = (node_df[centrality] - node_df[centrality].min()) / (
+                node_df[centrality].max() - node_df[centrality].min())
 
     # Centrality correlation
     centrality_corr = node_df[centrality_columns].corr()
     centrality_corr_mean = centrality_corr.map(lambda x: np.NAN if x == 1 else x).mean(skipna=True)
 
-    node_df['centrality'] = np.average(node_df[centrality_columns].values, axis=1, weights=abs(1- centrality_corr_mean))
+    node_df['centrality'] = np.average(node_df[centrality_columns].values, axis=1,
+                                       weights=abs(1 - centrality_corr_mean))
+
+    return node_df
+
+
+def evaluate_graph(graph, node_df=None):
+    """
+    Function to evaluate a graph and return summary statistics, and node dataframe characteristics
+
+    summarize the computations done in graph_evaluation.ipynb
+    """
+
+    # Extraction of nodes
+    if node_df is None:
+        node_df = pd.DataFrame.from_dict(dict(graph.nodes(data=True)), orient='index')['boarding_cost'].to_frame()
+        node_df.index.name = 'node_id'
+
+    # Evaluation of centrality
+    node_df = nodes_centrality_evaluation(graph, node_df)
 
     # Graph global measures
     graph_global_measures = pd.Series({
         "nodes": len(graph.nodes),
         "edges": len(graph.edges),
         "density": nx.density(graph),
-        "strong_GC": len(sorted((nx.strongly_connected_components(graph)), key=len, reverse=True)[0]) / len(graph.edges),
+        "strong_GC": len(sorted((nx.strongly_connected_components(graph)), key=len, reverse=True)[0]) / len(
+            graph.edges),
         "weak_GC": len(sorted((nx.weakly_connected_components(graph)), key=len, reverse=True)[0]) / len(graph.edges),
         "centrality_mean": node_df['centrality'].mean()
     }, name="global_measures")
 
     return graph_global_measures, node_df
-
-
-CWD = os.getcwd()
-DATA_PATH = os.path.join(CWD, 'data')
-GTFS_PATH = os.path.join(DATA_PATH, 'gtfs')
-GTFS_PATH_UK = os.path.join(DATA_PATH, 'gtfs_uk')
-GTFS_PATH_OTHER = os.path.join(DATA_PATH, 'gtfs_other')
