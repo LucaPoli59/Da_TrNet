@@ -368,6 +368,7 @@ def _generate_route_processing_results(
     all_edge_costs = []
     all_wait_times = []
 
+
     for tst_sub, edge_costs in results:
 
         # For each result, skip if it is empty

@@ -11,13 +11,19 @@ import osmnx as ox
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-CWD = os.getcwd()
-DATA_PATH = os.path.join(CWD, 'data')
+PROJECT_NAME = "DA_TrNet_proj"
+PROJECT_PATH = os.getcwd()
+while os.path.basename(os.getcwd()) != PROJECT_NAME:
+    os.chdir("..")
+    PROJECT_PATH = os.getcwd()
+
+
+DATA_PATH = os.path.join(PROJECT_PATH, 'data')
 GTFS_PATH_IT = os.path.join(DATA_PATH, 'gtfs_it')
 GTFS_PATH_UK = os.path.join(DATA_PATH, 'gtfs_uk')
 GTFS_PATH_OTHER = os.path.join(DATA_PATH, 'gtfs_other')
 
-APP_PATH = os.path.join(CWD, "app")
+APP_PATH = os.path.join(PROJECT_PATH, "app")
 RESULTS_PATH = os.path.join(APP_PATH, 'data')
 ATTACKS_PATH = os.path.join(RESULTS_PATH, 'attacks')
 
@@ -26,7 +32,7 @@ ATTACKS_PATH = os.path.join(RESULTS_PATH, 'attacks')
 ################### General Functions ##################################################
 ########################################################################################
 
-def load_graph(src=GTFS_PATH_OTHER, feed_id=1139, feed_name="DB", start_time=7, end_time=20):
+def load_graph_from_feed(src=GTFS_PATH_OTHER, feed_id=1139, feed_name="DB", start_time=7, end_time=20):
     feed_path = os.path.join(src, f'{feed_id}.zip')
     feed = ptr.get_representative_feed(feed_path)
     graph = ptr.load_feed_as_graph(feed, start_time=start_time * 3600, end_time=end_time * 3600, name=feed_name)

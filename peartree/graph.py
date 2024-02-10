@@ -235,8 +235,9 @@ def _add_modes_to_wait_times(
 
 def _merge_stop_waits_and_attributes(wait_times_by_stop: pd.DataFrame,
                                      feed_stops: pd.DataFrame) -> pd.DataFrame:
+
     wt_sub = wait_times_by_stop[['avg_cost', 'modes', 'stop_id']]
-    fs_sub = feed_stops[['stop_lat', 'stop_lon', 'stop_id']]
+    fs_sub = feed_stops[['stop_lat', 'stop_lon', 'stop_id', 'stop_name']]
     mdf = pd.merge(wt_sub, fs_sub, on='stop_id', how='left')
     return mdf[~mdf.isnull()]
 
@@ -286,7 +287,8 @@ def _add_nodes_and_edges(G: nx.MultiDiGraph,
                    boarding_cost=row.avg_cost,
                    modes=row.modes,
                    y=row.stop_lat,
-                   x=row.stop_lon)
+                   x=row.stop_lon,
+                   name=row.stop_name)
 
     for i, row in summary_edge_costs.iterrows():
         sid_fr = nameify_stop_id(name, row.from_stop_id)
