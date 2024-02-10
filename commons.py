@@ -6,17 +6,16 @@ import peartree as ptr
 import plotly.express as px
 import networkx as nx
 import datetime as dt
-import networkx as nx
 import osmnx as ox
+from fiona.crs import CRS
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-PROJECT_NAME = "DA_TrNet_proj"
+PROJECT_NAME = "data_analytics2"
 PROJECT_PATH = os.getcwd()
 while os.path.basename(os.getcwd()) != PROJECT_NAME:
     os.chdir("..")
     PROJECT_PATH = os.getcwd()
-
 
 DATA_PATH = os.path.join(PROJECT_PATH, 'data')
 GTFS_PATH_IT = os.path.join(DATA_PATH, 'gtfs_it')
@@ -47,7 +46,8 @@ def graph_to_gdfs(g):
     nodes = nodes.rename(columns={"x": "lon", "y": "lat"}).drop(columns=["modes"])
     nodes.index.name = "node_id"
 
-    edges = edges.rename(columns={"u": "source", "v": "target"}).drop(columns=["mode"]).reset_index(level=-1, drop=True)
+    edges = edges.drop(columns=["mode"]).reset_index(level=-1, drop=True)
+    edges.index.names = ["source", "target"]
     return nodes, edges
 
 
@@ -70,6 +70,26 @@ def pad_array(array, pad_val=None, step=1, n_pads=1):
     for i in range(step):
         output[i::step + n_pads] = array[i::step]
     return output
+
+
+def custom_stringizer(value):
+    """Custom stringizer for the CRS class used for graph writing"""
+    if isinstance(value, CRS):
+        return "<CRS>_" + value.to_string()
+    elif isinstance(value, str):
+        return value
+    else:
+        raise ValueError("not a CRS or string")
+
+
+def custom_destringizer(value):
+    """Custom destringizer for the CRS class used for graph reading"""
+    if isinstance(value, str):
+        if value.startswith("<CRS>_"):
+            return CRS.from_string(value=value.replace("<CRS>_", ""))
+        return value
+    else:
+        raise ValueError("not a string")
 
 
 ########################################################################################
@@ -185,7 +205,7 @@ def nodes_centrality_evaluation(graph, node_df):
     return node_df
 
 
-def evaluate_graph(graph, node_df=None):
+def evaluate_graph(graph, node_df_in=None):
     """
     Function to evaluate a graph and return summary statistics, and node dataframe characteristics
 
@@ -193,8 +213,10 @@ def evaluate_graph(graph, node_df=None):
     """
 
     # Extraction of nodes
-    if node_df is None:
+    if node_df_in is None:
         node_df, _ = graph_to_data(graph)
+    else:
+        node_df = node_df_in.copy()
 
     # Evaluation of centrality
     node_df = nodes_centrality_evaluation(graph, node_df)
@@ -271,7 +293,8 @@ def plot_attack_result(results, title, cols_to_plot=None):
     return full_fig, scaled_fig
 
 
-def attacks_results_summary(results_list, summary_col='weak_GC', threshold=0.05, names_list=None, save=False, n_steps=10):
+def attacks_results_summary(results_list, summary_col='weak_GC', threshold=0.05, names_list=None, save=False,
+                            n_steps=10):
     if names_list is None:
         names_list = ['random', 'centrality', 'degree', 'betweenness', 'closeness', 'eigenvector', 'pagerank']
 
@@ -288,11 +311,9 @@ def attacks_results_summary(results_list, summary_col='weak_GC', threshold=0.05,
         summary_df.to_csv(os.path.join(ATTACKS_PATH, f'summary_df_{n_steps}.csv'))
         dead_points.to_csv(os.path.join(ATTACKS_PATH, f'summary_dps_{n_steps}.csv'))
 
-    summary_plot = px.line(summary_df, title=f'{summary_col.upper()} Component for different attacks', labels={'value': 'Weak GC', 'index': 'Timestep'})
+    summary_plot = px.line(summary_df, title=f'{summary_col.upper()} Component for different attacks',
+                           labels={'value': 'Weak GC', 'index': 'Timestep'})
     bar_plot = px.bar(dead_points, title=f'Dead Graph Timestep for different attacks based on {summary_col.upper()}',
                       labels={'value': 'Dead Timestep', 'index': 'Attack type'})
 
-
     return dead_points, summary_df, bar_plot, summary_plot
-
-
