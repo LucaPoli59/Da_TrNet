@@ -13,10 +13,11 @@ from plotly.subplots import make_subplots
 
 CWD = os.getcwd()
 DATA_PATH = os.path.join(CWD, 'data')
-GTFS_PATH = os.path.join(DATA_PATH, 'gtfs')
+GTFS_PATH_IT = os.path.join(DATA_PATH, 'gtfs_it')
 GTFS_PATH_UK = os.path.join(DATA_PATH, 'gtfs_uk')
 GTFS_PATH_OTHER = os.path.join(DATA_PATH, 'gtfs_other')
-
+RESULTS_PATH = os.path.join(DATA_PATH, 'output')
+ATTACKS_PATH = os.path.join(RESULTS_PATH, 'attacks')
 
 ########################################################################################
 ################### General Functions ##################################################
@@ -139,13 +140,16 @@ def nodes_centrality_evaluation(graph, node_df):
 
     # Centrality
     centrality_columns = ['centrality_degree', 'centrality_betweenness', 'centrality_closeness',
-                          'centrality_eigenvector']
+                          'centrality_eigenvector', "centrality_clustering", "centrality_pagerank"]
+
     weight = "length"
 
     node_df['centrality_degree'] = node_df['degree'] / node_df['degree'].max()
     node_df['centrality_betweenness'] = nx.betweenness_centrality(graph, weight=weight)
     node_df['centrality_closeness'] = nx.closeness_centrality(graph, distance=weight)
     node_df['centrality_eigenvector'] = nx.eigenvector_centrality_numpy(graph, weight=weight)
+    node_df['centrality_clustering'] = nx.clustering(nx.DiGraph(graph), weight=weight)
+    node_df['centrality_pagerank'] = nx.pagerank(graph, weight=weight)
 
     # Centrality scaling
     for centrality in centrality_columns:
@@ -191,6 +195,8 @@ def evaluate_graph(graph, node_df=None):
         "global_cb_mean": node_df['centrality_betweenness'].mean(),
         "global_cc_mean": node_df['centrality_closeness'].mean(),
         "global_ce_mean": node_df['centrality_eigenvector'].mean(),
+        "global_ccc_mean": node_df['centrality_clustering'].mean(),
+        "global_cp_mean": node_df['centrality_pagerank'].mean()
     }, name="global_measures")
 
     return graph_global_measures, node_df
@@ -200,7 +206,7 @@ def evaluate_graph(graph, node_df=None):
 ################### Graph Attack #######################################################
 ########################################################################################
 
-def attack_graph(graph_in, target, n_steps):
+def attack_graph(graph_in, target=None, n_steps=10):
     graph = graph_in.copy()
     graph_stats, node_df = evaluate_graph(graph)
     total_nodes = graph_stats['nodes']
@@ -228,7 +234,7 @@ def attack_graph(graph_in, target, n_steps):
 
 def plot_attack_result(results, title, cols_to_plot=None):
     if cols_to_plot is None:
-        cols_to_plot = ['density', 'strong_GC', 'weak_GC', 'centrality_mean', 'edges', 'avg_degree']
+        cols_to_plot = ['edges', 'density', 'strong_GC', 'weak_GC', 'global_c_mean', 'avg_degree']
     elif (len(cols_to_plot) % 2) != 0:
         raise ValueError('cols_to_plot must have an even number of elements')
 
@@ -236,9 +242,11 @@ def plot_attack_result(results, title, cols_to_plot=None):
     for i, col in enumerate(cols_to_plot):
         full_fig.add_trace(go.Scatter(x=results.index, y=results[col], mode='markers+lines', name=col, hoverinfo="y"), row=i//2 + 1, col=i%2 + 1)
 
-    full_fig.update_layout(title=title, showlegend=False)
+    full_fig.update_layout(title=title, showlegend=False, title_xanchor="center",
+                           title_yanchor="top", title_y=0.9, title_x=0.5)
 
     results_scaled = results[cols_to_plot] / results[cols_to_plot].max()
-    scaled_fig = px.line(results_scaled, x=results_scaled.index, y=results_scaled.columns, title=title)
+    scaled_fig = px.line(results_scaled, x=results_scaled.index, y=results_scaled.columns, title=title
+                         ).update_layout(title_xanchor="center", title_yanchor="top", title_y=0.9, title_x=0.5)
 
     return full_fig, scaled_fig
