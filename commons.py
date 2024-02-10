@@ -9,6 +9,7 @@ import datetime as dt
 import networkx as nx
 import osmnx as ox
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 CWD = os.getcwd()
 DATA_PATH = os.path.join(CWD, 'data')
@@ -123,6 +124,12 @@ def plot_graph_map(g, marker_style=None, num_edge_markers=0, **fig_style_kwargs)
 ################### Graph Evaluation ###################################################
 ########################################################################################
 
+def load_node_df(graph):
+    node_df = pd.DataFrame.from_dict(dict(graph.nodes(data=True)), orient='index')['boarding_cost'].to_frame()
+    node_df.index.name = 'node_id'
+    return node_df
+
+
 def nodes_centrality_evaluation(graph, node_df):
     """
     Function to evaluate the centrality of nodes in a graph
@@ -142,14 +149,15 @@ def nodes_centrality_evaluation(graph, node_df):
 
     # Centrality scaling
     for centrality in centrality_columns:
-        node_df[centrality] = (node_df[centrality] - node_df[centrality].min()) / (
-                node_df[centrality].max() - node_df[centrality].min())
+        node_df[centrality + "_scaled"] = node_df[centrality] / node_df[centrality].max()
+
+    centrality_columns_scaled = [centrality + "_scaled" for centrality in centrality_columns]
 
     # Centrality correlation
     centrality_corr = node_df[centrality_columns].corr()
     centrality_corr_mean = centrality_corr.map(lambda x: np.NAN if x == 1 else x).mean(skipna=True)
 
-    node_df['centrality'] = np.average(node_df[centrality_columns].values, axis=1,
+    node_df['centrality'] = np.average(node_df[centrality_columns_scaled].values, axis=1,
                                        weights=abs(1 - centrality_corr_mean))
 
     return node_df
@@ -164,8 +172,7 @@ def evaluate_graph(graph, node_df=None):
 
     # Extraction of nodes
     if node_df is None:
-        node_df = pd.DataFrame.from_dict(dict(graph.nodes(data=True)), orient='index')['boarding_cost'].to_frame()
-        node_df.index.name = 'node_id'
+        node_df = load_node_df(graph)
 
     # Evaluation of centrality
     node_df = nodes_centrality_evaluation(graph, node_df)
@@ -176,9 +183,62 @@ def evaluate_graph(graph, node_df=None):
         "edges": len(graph.edges),
         "density": nx.density(graph),
         "strong_GC": len(sorted((nx.strongly_connected_components(graph)), key=len, reverse=True)[0]) / len(
-            graph.edges),
-        "weak_GC": len(sorted((nx.weakly_connected_components(graph)), key=len, reverse=True)[0]) / len(graph.edges),
-        "centrality_mean": node_df['centrality'].mean()
+            graph.nodes),
+        "weak_GC": len(sorted((nx.weakly_connected_components(graph)), key=len, reverse=True)[0]) / len(graph.nodes),
+        "avg_degree": node_df['degree'].mean(),
+        "global_c_mean": node_df['centrality'].mean(),
+        "global_cd_mean": node_df['centrality_degree'].mean(),
+        "global_cb_mean": node_df['centrality_betweenness'].mean(),
+        "global_cc_mean": node_df['centrality_closeness'].mean(),
+        "global_ce_mean": node_df['centrality_eigenvector'].mean(),
     }, name="global_measures")
 
     return graph_global_measures, node_df
+
+
+########################################################################################
+################### Graph Attack #######################################################
+########################################################################################
+
+def attack_graph(graph_in, target, n_steps):
+    graph = graph_in.copy()
+    graph_stats, node_df = evaluate_graph(graph)
+    total_nodes = graph_stats['nodes']
+    amount = int(total_nodes / (n_steps - 1))
+
+    results = {'100%': graph_stats.values}
+    for i in range(n_steps - 2):
+        if target is None:
+            nodes_to_drop = node_df.sample(amount).index  # random nodes
+        else:
+            nodes_to_drop = node_df.sort_values(target, ascending=False).head(
+                amount).index  # nodes with the highest target value
+        for node_to_drop in nodes_to_drop:
+            graph.remove_node(node_to_drop)
+
+        graph_stats, node_df = evaluate_graph(graph)
+        curr_nodes = graph_stats['nodes']
+        row_name = str(100 - int((total_nodes - curr_nodes) / total_nodes * 100)).zfill(3) + '%'
+        results[row_name] = graph_stats.values
+
+    results = pd.DataFrame(results).transpose().rename(
+        columns={i: col for i, col in enumerate(graph_stats.index)}).fillna(0)
+    return results
+
+
+def plot_attack_result(results, title, cols_to_plot=None):
+    if cols_to_plot is None:
+        cols_to_plot = ['density', 'strong_GC', 'weak_GC', 'centrality_mean', 'edges', 'avg_degree']
+    elif (len(cols_to_plot) % 2) != 0:
+        raise ValueError('cols_to_plot must have an even number of elements')
+
+    full_fig = make_subplots(rows=int(len(cols_to_plot)/2), cols=2, subplot_titles=cols_to_plot, shared_xaxes=True)
+    for i, col in enumerate(cols_to_plot):
+        full_fig.add_trace(go.Scatter(x=results.index, y=results[col], mode='markers+lines', name=col, hoverinfo="y"), row=i//2 + 1, col=i%2 + 1)
+
+    full_fig.update_layout(title=title, showlegend=False)
+
+    results_scaled = results[cols_to_plot] / results[cols_to_plot].max()
+    scaled_fig = px.line(results_scaled, x=results_scaled.index, y=results_scaled.columns, title=title)
+
+    return full_fig, scaled_fig
