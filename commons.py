@@ -16,7 +16,9 @@ DATA_PATH = os.path.join(CWD, 'data')
 GTFS_PATH_IT = os.path.join(DATA_PATH, 'gtfs_it')
 GTFS_PATH_UK = os.path.join(DATA_PATH, 'gtfs_uk')
 GTFS_PATH_OTHER = os.path.join(DATA_PATH, 'gtfs_other')
-RESULTS_PATH = os.path.join(DATA_PATH, 'output')
+
+APP_PATH = os.path.join(CWD, "app")
+RESULTS_PATH = os.path.join(APP_PATH, 'data')
 ATTACKS_PATH = os.path.join(RESULTS_PATH, 'attacks')
 
 ########################################################################################
