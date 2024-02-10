@@ -210,10 +210,10 @@ def attack_graph(graph_in, target=None, n_steps=10):
     graph = graph_in.copy()
     graph_stats, node_df = evaluate_graph(graph)
     total_nodes = graph_stats['nodes']
-    amount = int(total_nodes / (n_steps - 1))
+    amount = int(total_nodes / n_steps)
 
     results = {'100%': graph_stats.values}
-    for i in range(n_steps - 2):
+    for i in range(n_steps - 1):
         if target is None:
             nodes_to_drop = node_df.sample(amount).index  # random nodes
         else:
