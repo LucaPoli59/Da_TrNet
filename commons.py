@@ -92,6 +92,15 @@ def custom_destringizer(value):
         raise ValueError("not a string")
 
 
+def save_graph(graph, path, **kwargs):
+    """Saves a graph to a file"""
+    nx.write_gml(graph, path, stringizer=custom_stringizer, **kwargs)
+
+
+def load_graph_from_file(path, **kwargs):
+    """Loads a graph from a file"""
+    return nx.read_gml(path, destringizer=custom_destringizer, **kwargs)
+
 ########################################################################################
 ################### Plotting Functions #################################################
 ########################################################################################

@@ -16,11 +16,11 @@ app.layout = html.Div([
           [Input(component_id='url', component_property='pathname')],
           prevent_initial_call=True)
 def display_page(pathname):
-    if pathname == 'evaluation':
+    if pathname == '/evaluation':
         return evaluation.layout
-    elif pathname == 'attacks':
+    elif pathname == '/attacks':
         return attacks.layout
-    elif pathname == 'demo':
+    elif pathname == '/demo':
         return demo.layout
     else:
         return home.layout
