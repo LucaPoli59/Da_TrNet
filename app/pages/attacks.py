@@ -17,9 +17,6 @@ attacks_results = {attack: pd.read_csv(os.path.join(ATTACKS_PATH, f"{attack}_{n_
 
 summary_col_options = attacks_results[attacks_types[0]].columns[3:-1]
 
-print(summary_col_options, "\n\n")
-
-
 layout = dbc.Container(className="fluid", children=[
     html.Center(html.H1("Attacks Analysis", className="display-3 my-4")),
     html.Center(html.H3("Analisi per ogni attacco")),

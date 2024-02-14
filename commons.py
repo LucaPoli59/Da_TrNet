@@ -10,6 +10,8 @@ import osmnx as ox
 from fiona.crs import CRS
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import json
+from io import StringIO
 
 PROJECT_NAME = "data_analytics2"
 PROJECT_PATH = os.getcwd()
@@ -25,6 +27,13 @@ GTFS_PATH_OTHER = os.path.join(DATA_PATH, 'gtfs_other')
 APP_PATH = os.path.join(PROJECT_PATH, "app")
 RESULTS_PATH = os.path.join(APP_PATH, 'data')
 ATTACKS_PATH = os.path.join(RESULTS_PATH, 'attacks')
+USERS_PATH = os.path.join(RESULTS_PATH, 'users')
+
+EDGE_NAME_MID_TOKEN = "<-TO->"
+DEFAULT_MAPBOX_STYLE = dict(nodes=dict(size=4, color="#ec4540"), edges=dict(width=1, color="#697bf4"),
+                            margin={'l': 0, 't': 0, 'b': 0, 'r': 0},
+                            mapbox={'style': "open-street-map", 'zoom': 4,
+                                    'center': {'lat': 49.025284, 'lon': 12.0}})
 
 
 ########################################################################################
@@ -94,44 +103,101 @@ def custom_destringizer(value):
 
 def save_graph(graph, path, **kwargs):
     """Saves a graph to a file"""
-    nx.write_gml(graph, path, stringizer=custom_stringizer, **kwargs)
+    nx.write_gml(graph, path + ".gml", stringizer=custom_stringizer, **kwargs)
 
 
 def load_graph_from_file(path, **kwargs):
     """Loads a graph from a file"""
-    return nx.read_gml(path, destringizer=custom_destringizer, **kwargs)
+    return nx.read_gml(path + ".gml", destringizer=custom_destringizer, **kwargs)
+
+
+def json_dumps_dfs_to_store(node_df, edge_df):
+    return json.dumps(dict(node_df=node_df.to_json(orient="split", date_format="iso", index=True),
+                           edge_df=edge_df.to_json(orient="split", date_format="iso", index=True)))
+
+
+def json_loads_df_from_store(store, key):
+    return pd.read_json(StringIO(json.loads(store)[key]), orient="split")
+
+
+def json_dumps_graph_to_store(graph_in):
+    graph = graph_in.copy()
+    graph_dict = nx.node_link_data(graph)
+    graph_dict['graph']['crs'] = custom_stringizer(graph_dict['graph']['crs'])
+    return json.dumps(dict(graph=graph_dict))
+
+
+def json_loads_graph_from_store(store, key="graph"):
+    graph_dict = json.loads(store)[key]
+    graph_dict['graph']['crs'] = custom_destringizer(graph_dict['graph']['crs'])
+    return nx.node_link_graph(graph_dict)
+
 
 ########################################################################################
 ################### Plotting Functions #################################################
 ########################################################################################
 
 
-def linestring_to_coords(linestring, dim):
+def node_gdf_to_coords(node_gdf):
+    node_dict = node_gdf.reset_index()[['lon', 'lat', 'node_id']].to_dict(orient="list")
+    return node_dict['lon'], node_dict['lat'], node_dict['node_id']
+
+
+def preprocess_edge_gdf(edge_gdf):
+    edge_gdf['name'] = "From " + edge_gdf['name'].str.replace(EDGE_NAME_MID_TOKEN, " To ")
+    edge_gdf.index = edge_gdf.index.map(
+        lambda index: index[0].replace("DB_", "") + "-TO-" + index[1].replace("DB_", ""))  # Unify the index
+    edge_gdf.index.name = "edge_id"
+    return edge_gdf
+
+
+def linestring_to_linespace_coords(linestring, dim):
     lat, long = linestring.xy
     return [np.linspace(lat[0], lat[1], dim + 2)[1:-1], np.linspace(long[0], long[1], dim + 2)[1:-1]]
 
 
-def plot_graph_map(g, marker_style=None, num_edge_markers=0,
-                   **fig_style_kwargs):  # todo: remove nodes and edges import and add them as parameters
-    if marker_style is None:
-        marker_style = dict(size=10, color="red")
-    if "margin" not in fig_style_kwargs.keys():
-        fig_style_kwargs["margin"] = {'l': 0, 't': 0, 'b': 0, 'r': 0}
-    if "mapbox" not in fig_style_kwargs.keys():
-        fig_style_kwargs["mapbox"] = {'style': "open-street-map", 'zoom': 2}
+def edge_gdf_to_coords(edge_gdf, linespace_dim=None):
+    if linespace_dim is None or linespace_dim == 2:
+        linespace_dim = 2
+        edge_gdf[['lon', 'lat']] = edge_gdf['geometry'].to_frame().apply(lambda row: row.iloc[0].xy, axis=1,
+                                                                         result_type="expand")  # Split the geometry into lat and long
+    else:
+        if linespace_dim < 1:
+            raise ValueError("linespace_dim must be greater than 1")
+
+        edge_gdf[['lon', 'lat']] = edge_gdf['geometry'].to_frame().apply(
+            lambda row: linestring_to_linespace_coords(row.iloc[0], linespace_dim), axis=1,
+            result_type="expand")  # Split the geometry into lat and long (with linespace_dim)
+
+    longs = pad_array(np.concatenate(edge_gdf['lon'].values), step=linespace_dim)
+    lats = pad_array(np.concatenate(edge_gdf['lat'].values), step=linespace_dim)
+    ids = pad_array(np.repeat(edge_gdf.index.values, linespace_dim), step=linespace_dim)
+
+    return longs, lats, ids
+
+
+def plot_graph_map(g, num_edge_markers=30, nodes_style=None, edges_style=None, fig_style=None):
+    if fig_style is None:
+        fig_style = {}
+    if nodes_style is None:
+        nodes_style = DEFAULT_MAPBOX_STYLE["nodes"]
+    if edges_style is None:
+        edges_style = DEFAULT_MAPBOX_STYLE["edges"]
+    if "margin" not in fig_style.keys():
+        fig_style["margin"] = DEFAULT_MAPBOX_STYLE["margin"]
+    if "mapbox" not in fig_style.keys():
+        fig_style["mapbox"] = DEFAULT_MAPBOX_STYLE["mapbox"]
 
     nodes, edges = graph_to_gdfs(g)
-    nodes_dict = nodes[["lon", "lat"]].reset_index().to_dict(orient="list")
-    nodes_names, nodes_lats, nodes_longs = nodes_dict["name"], nodes_dict["lat"], nodes_dict["lon"]
 
-    edges.index = edges.index.droplevel(2).map(
-        lambda index: index[0].replace("DB_", "") + "-TO-" + index[1].replace("DB_", "")).values
-    edges.index.name = "name"
-    edges_coords = edges['geometry'].to_frame().apply(lambda row: row.iloc[0].xy, axis=1,
-                                                      result_type="expand").reset_index().rename(
-        columns={0: "lon", 1: "lat"})
-    edges_longs, edges_lats = pad_array(np.concatenate(edges_coords['lon'].values), step=2), pad_array(
-        np.concatenate(edges_coords['lat'].values), step=2)
+    threshold_25, threshold_75 = nodes['degree'].quantile(0.25), nodes['degree'].quantile(0.75)
+    leaf_nodes = nodes[nodes['degree'] < threshold_25]
+    mid_nodes = nodes[(nodes['degree'] >= threshold_25) & (nodes['degree'] <= threshold_75)]
+    hub_nodes = nodes[nodes['degree'] > threshold_75]
+
+    edges = preprocess_edge_gdf(edges)
+    edges_longs, edges_lats, edges_ids = edge_gdf_to_coords(edges)
+    edges_markers_longs, edges_markers_lats, edges_markers_ids = edge_gdf_to_coords(edges, num_edge_markers)
 
     fig = go.Figure()
 
@@ -139,38 +205,37 @@ def plot_graph_map(g, marker_style=None, num_edge_markers=0,
         mode="lines",
         lon=edges_longs,
         lat=edges_lats,
+        hoverinfo="skip",
+        line=edges_style
     ))
 
-    if num_edge_markers != 0:
-        edges_markers = edges['geometry'].to_frame().apply(
-            lambda row: linestring_to_coords(row.iloc[0], num_edge_markers), axis=1, result_type="expand"
-        ).reset_index().rename(columns={0: "lon", 1: "lat"})
-        edges_longs_marker = pad_array(np.concatenate(edges_markers['lon'].values), step=num_edge_markers)
-        edges_lats_marker = pad_array(np.concatenate(edges_markers['lat'].values), step=num_edge_markers)
-        edges_text_marker = pad_array(edges.index.values.repeat(num_edge_markers), step=num_edge_markers)
-
-        fig.add_trace(go.Scattermapbox(
-            mode="markers",
-            lon=edges_longs_marker,
-            lat=edges_lats_marker,
-            hoverinfo="text",
-            text=edges_text_marker,
-            marker=dict(color="rgba(0, 0, 0, 0.0)"),
-            name="edges_markers")
-        )
-
-    fig.add_trace(go.Scattermapbox(
+    fig.add_trace(go.Scattermapbox(  # add edges markers (to be able to hover on edges)
         mode="markers",
-        lon=nodes_longs,
-        lat=nodes_lats,
-        hoverinfo="text",
-        text=nodes_names,
-        marker=marker_style)
-    )
+        lon=edges_markers_longs,
+        lat=edges_markers_lats,
+        ids=edges_markers_ids,
+        hoverinfo="none",
+        marker=dict(color="rgba(0, 0, 0, 0.0)"),
+    ))
 
-    fig.update_layout(showlegend=False)
-    fig.update_layout(fig_style_kwargs)
-    return fig
+    for i, node_gdf in enumerate([leaf_nodes, mid_nodes, hub_nodes]):
+        longs, lats, ids = node_gdf_to_coords(node_gdf)
+        marker_dict = nodes_style.copy()
+        marker_dict['size'] = marker_dict['size'] + (i * 3)
+        fig.add_trace(go.Scattermapbox(  # add nodes
+            mode="markers",
+            lon=longs,
+            lat=lats,
+            ids=ids,
+            hoverinfo="none",
+            marker=marker_dict
+        ))
+
+    fig.update_layout(showlegend=False).update_layout(fig_style)
+
+    node_df = nodes.drop(columns=["geometry", "lon", "lat"]).round(5)
+    edge_df = edges.drop(columns=["geometry", "lon", "lat"])
+    return node_df, edge_df, fig
 
 
 ########################################################################################
@@ -292,11 +357,11 @@ def plot_attack_result(results, title, cols_to_plot=None):
         full_fig.add_trace(go.Scatter(x=results.index, y=results[col], mode='markers+lines', name=col, hoverinfo="y"),
                            row=i // 2 + 1, col=i % 2 + 1)
 
-    full_fig.update_layout(title=title, showlegend=False, title_xanchor="center",
+    full_fig.update_layout(title=title + " specifica", showlegend=False, title_xanchor="center",
                            title_yanchor="top", title_y=0.9, title_x=0.5)
 
     results_scaled = results[cols_to_plot] / results[cols_to_plot].max()
-    scaled_fig = px.line(results_scaled, x=results_scaled.index, y=results_scaled.columns, title=title
+    scaled_fig = px.line(results_scaled, x=results_scaled.index, y=results_scaled.columns, title=title + " riassuntiva"
                          ).update_layout(title_xanchor="center", title_yanchor="top", title_y=0.9, title_x=0.5)
 
     return full_fig, scaled_fig
@@ -326,3 +391,48 @@ def attacks_results_summary(results_list, summary_col='weak_GC', threshold=0.05,
                       labels={'value': 'Dead Timestep', 'index': 'Attack type'})
 
     return dead_points, summary_df, bar_plot, summary_plot
+
+
+########################################################################################
+################### Prettify functions #################################################
+########################################################################################
+
+
+def prettify_node_df(node_df, inplace=False):
+    if not inplace:
+        node_df = node_df.copy()
+    node_df.columns = node_df.columns.str.replace("_", " ").str.replace("centrality", "Cent."
+                                                                        ).str.replace("scaled", "R").str.title()
+    node_df.columns.name = "Property type"
+    node_cols = node_df.columns.to_list()
+    node_cols = node_cols[:3] + [node_cols[-1]] + node_cols[3:-1]
+    node_df = node_df[node_cols]
+    node_df.iloc[:, 3:] = node_df.iloc[:, 3:].round(5)
+    return node_df
+
+
+def prettify_edge_df(edge_df, inplace=False):
+    if not inplace:
+        edge_df = edge_df.copy()
+    edge_df = edge_df[["name", "length"]]
+    edge_df["name"] = edge_df["name"].str.replace("_", " ")
+    edge_df.columns = edge_df.columns.str.replace("_", " ").str.title()
+    edge_df.columns.name = "Property type"
+    return edge_df
+
+
+def prettify_graph_stats(graph_stats, first_line_name="State 0"):
+    graph_stats = graph_stats.rename(columns={"global_measures": first_line_name}).transpose().round(7)
+    rename_dict = {
+        "global_c_mean": "centrality mean [scaled]",
+        "global_cd_mean": "centrality degree mean",
+        "global_cb_mean": "centrality betweenness mean",
+        "global_cc_mean": "centrality closeness mean",
+        "global_ce_mean": "centrality eigenvector mean",
+        "global_ccc_mean": "clustering coefficient mean",
+        "global_cp_mean": "pagerank mean"
+    }
+    graph_stats.index.name = "State"
+    graph_stats.columns = graph_stats.rename(columns=rename_dict) \
+        .columns.str.replace("_", " ").str.replace("GC", "giant component").str.title()
+    return graph_stats.reset_index()

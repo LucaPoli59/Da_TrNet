@@ -10,7 +10,7 @@ from dash_ag_grid import AgGrid
 from commons import *
 
 graph_stats = pd.read_csv(os.path.join(RESULTS_PATH, "graph_stats.csv"), index_col="metric")
-graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph.gml"))
+graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph"))
 node_df, edge_df = graph_to_gdfs(graph)
 centrality_columns = ['centrality_degree', 'centrality_betweenness', 'centrality_closeness', 'centrality_eigenvector',
                       "centrality_clustering", "centrality_pagerank"]
@@ -36,14 +36,18 @@ for stats in ['mean', 'std', '25%', '50%', '75%']:
 centrality_summary.index = centrality_summary.index.str.replace('centrality_', '')
 centrality_summary = centrality_summary.round(5)
 
+
+graph_stats_table = dbc.Table.from_dataframe(graph_stats.reset_index(), bordered=True, hover=True, responsive=True,
+                                             striped=True, size="sm")
+
+centrality_summary_table = dbc.Table.from_dataframe(centrality_summary.reset_index(), bordered=True, hover=True,
+                                                    responsive=True, striped=True, size="sm")
+
+
 layout = dbc.Container(className="fluid", children=[
     html.Center(html.H1("Graph Evaluation", className="display-3 my-4")),
     html.Center(html.H3("Caratteristiche generali del grafo")),
-    html.Div(className="my-3", children=[
-        dash_table.DataTable(graph_stats.reset_index().to_dict('records'),
-                             style_header={'height': 'auto', 'whiteSpace': 'normal'}, style_table={'overflowX': 'auto'},
-                             style_cell={'textAlign': 'left', 'whiteSpace': 'normal'})
-    ]),
+    html.Div(className="my-3", children=[graph_stats_table]),
     html.Center(html.H3("Distribuzione del grado dei nodi", className="mt-5")),
     html.Div(className="my-3", children=[
         dcc.Graph(figure=px.histogram(node_df, x='degree',
@@ -57,10 +61,6 @@ layout = dbc.Container(className="fluid", children=[
     html.Div(className="my-3", children=[dcc.Graph(figure=px.imshow(centrality_corr))]),
 
     html.Center(html.H5("Tabella riassuntiva delle metriche di centralità", className="mt-5")),
-    html.Div(className="my-3", children=[dash_table.DataTable(centrality_summary.reset_index().to_dict('records'),
-                                                              style_header={'height': 'auto', 'whiteSpace': 'normal'},
-                                                              style_table={'overflowX': 'auto'},
-                                                              style_cell={'textAlign': 'left', 'whiteSpace': 'normal'}
-                                                              )]),
+    html.Div(className="my-3", children=[centrality_summary_table]),
 
 ])
