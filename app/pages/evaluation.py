@@ -36,9 +36,10 @@ for stats in ['mean', 'std', '25%', '50%', '75%']:
 centrality_summary.index = centrality_summary.index.str.replace('centrality_', '')
 centrality_summary = centrality_summary.round(5)
 
-
-graph_stats_table = dbc.Table.from_dataframe(graph_stats.reset_index(), bordered=True, hover=True, responsive=True,
-                                             striped=True, size="sm")
+graph_stats_pretty = graph_stats.rename(columns={"global_measures": "Value"})
+graph_stats_pretty.index = prettify_graph_stats(graph_stats_pretty).set_index("State").columns
+graph_stats_table = dbc.Table.from_dataframe(graph_stats_pretty.reset_index(), bordered=True, hover=True,
+                                             responsive=True, striped=True, size="sm")
 
 centrality_summary_table = dbc.Table.from_dataframe(centrality_summary.reset_index(), bordered=True, hover=True,
                                                     responsive=True, striped=True, size="sm")
@@ -58,7 +59,8 @@ layout = dbc.Container(className="fluid", children=[
         dcc.Graph(figure=centrality_summary_fig)
     ]),
     html.Center(html.H5("Tabella correlazione tra le metriche di centralità", className="mt-5")),
-    html.Div(className="my-3", children=[dcc.Graph(figure=px.imshow(centrality_corr))]),
+    html.Div(className="my-3", children=[dcc.Graph(figure=px.imshow(centrality_corr, text_auto=True, zmin=-1, zmax=1,
+                                                                    aspect='auto', color_continuous_scale='RdBu_r'))]),
 
     html.Center(html.H5("Tabella riassuntiva delle metriche di centralità", className="mt-5")),
     html.Div(className="my-3", children=[centrality_summary_table]),

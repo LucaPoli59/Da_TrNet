@@ -34,7 +34,6 @@ init_graph_stats_table = AgGrid(rowData=init_graph_stats.to_dict('records'),
                                 columnSize='sizeToFit',
                                 id="graph_stats_table")
 
-print("start\n\n\n\n")
 
 layout = dbc.Container(fluid=True, children=[
     html.Center(html.H1("Demo", className="display-3 my-4")),
@@ -359,7 +358,6 @@ def check_remove_elements(selected_data):
               (Output("graph_notify", "children"), graph_notify_save, html.P("")),
           ])
 def save_graph_to_file(file_name, graph_data, __):
-    print(file_name)
     file_name = "_" + file_name.replace(" ", "_")
 
     graph = json_loads_graph_from_store(graph_data)
