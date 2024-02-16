@@ -439,7 +439,8 @@ def attacks_results_summary(results_list, summary_col='weak_GC', threshold=0.05,
 def prettify_node_df(node_df, inplace=False):
     if not inplace:
         node_df = node_df.copy()
-    node_df.columns = node_df.columns.str.replace("_", " ").str.replace("centrality", "Cent."
+
+    node_df.columns = node_df.columns.str.replace("_", " ").str.replace("centrality", "Cent"
                                                                         ).str.replace("scaled", "R").str.title()
     node_df.columns.name = "Property type"
     node_cols = node_df.columns.to_list()
