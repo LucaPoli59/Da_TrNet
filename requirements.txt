@@ -1,0 +1,11 @@
+pandas
+numpy
+plotly
+dash
+dash-bootstrap-components
+dash-mantine-components
+
+networkx
+partridge
+osmnx
+fiona
