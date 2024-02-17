@@ -179,7 +179,8 @@ def edge_gdf_to_coords(edge_gdf, linespace_dim=None):
     return longs, lats, ids
 
 
-def plot_graph_map(g, num_edge_markers=30, nodes_style=None, edges_style=None, fig_style=None):
+def plot_graph_map(g, num_edge_markers=30, nodes_style=None, edges_style=None, fig_style=None,
+                   nodes_marker_increment=3):
     if fig_style is None:
         fig_style = {}
     if nodes_style is None:
@@ -224,7 +225,7 @@ def plot_graph_map(g, num_edge_markers=30, nodes_style=None, edges_style=None, f
     for i, node_gdf in enumerate([leaf_nodes, mid_nodes, hub_nodes]):
         longs, lats, ids = node_gdf_to_coords(node_gdf)
         marker_dict = nodes_style.copy()
-        marker_dict['size'] = marker_dict['size'] + (i * 3)
+        marker_dict['size'] = marker_dict['size'] + (i * nodes_marker_increment)
         fig.add_trace(go.Scattermapbox(  # add nodes
             mode="markers",
             lon=longs,
@@ -363,7 +364,7 @@ def plot_attack_result(results, title, cols_to_plot=None, prettify=True):
         results = results[cols_to_plot].copy()
 
     full_fig = make_subplots(rows=int(len(results.columns)/2), cols=2, subplot_titles=results.columns,
-                             shared_xaxes=True, x_title="Nodes removed %", y_title="Value")
+                             shared_xaxes=True, x_title="Nodes remaining%", y_title="Value")
     for i, col in enumerate(results.columns):
         full_fig.add_trace(go.Scatter(x=results.index, y=results[col], mode='markers+lines', name=col,
                                       hoverinfo="y"),
@@ -375,7 +376,7 @@ def plot_attack_result(results, title, cols_to_plot=None, prettify=True):
     results_scaled = results / results.max()
 
     scaled_fig = px.line(results_scaled, x=results_scaled.index, y=results_scaled.columns, title=title + " riassuntivo",
-                         labels={'value': 'Value', 'index': 'Percentage of nodes removed'},
+                         labels={'value': 'Value', 'index': 'Percentage of nodes remaining'},
                          ).update_layout(title_xanchor="center", title_yanchor="top", title_y=0.9, title_x=0.5)
 
     return full_fig, scaled_fig
@@ -385,7 +386,8 @@ def attacks_results_summary(results_list, summary_col='weak_GC', threshold=0.05,
                             n_steps=10, attack_nodes_lowerbound=ATTACKS_NODE_LOWERBOUND,
                             total_nodes=None, title=None, custom_labels=None):
     if names_list is None:
-        names_list = ['random', 'centrality', 'degree', 'betweenness', 'closeness', 'eigenvector', 'pagerank']
+        names_list = ['random', 'centrality', 'degree', 'betweenness', 'closeness', 'eigenvector', 'clustering',
+                      'pagerank']
 
     if custom_labels is None:
         custom_labels = {}
@@ -394,7 +396,7 @@ def attacks_results_summary(results_list, summary_col='weak_GC', threshold=0.05,
         summary_plot_title = f'{summary_col.title()} Component for different attacks'
         bar_plot_title = f'Dead Graph Timestep for different attacks based on {summary_col.upper()}'
     elif isinstance(title, tuple):
-        summary_plot_title, bar_plot_title = title
+        bar_plot_title, summary_plot_title = title
     else:
         summary_plot_title = title
         bar_plot_title = title
@@ -421,12 +423,17 @@ def attacks_results_summary(results_list, summary_col='weak_GC', threshold=0.05,
         summary_df.to_csv(os.path.join(ATTACKS_PATH, f'summary_df_{n_steps}.csv'))
         dead_points.to_csv(os.path.join(ATTACKS_PATH, f'summary_dps_{n_steps}.csv'))
 
-    summary_plot = px.line(summary_df, title=summary_plot_title,
-                           labels={'value': summary_col, 'index': 'Timestep'} | custom_labels)
     bar_plot = px.bar(dead_points, x=dead_points.index, y='dead_point', hover_data='edges',
                       title=bar_plot_title,
                       labels={'edges': 'Edges Removed', 'attack': 'Attack type', 'dead_point': 'Dead Timestep'
-                              } | custom_labels)
+                              } | custom_labels
+                      ).update_layout(title_xanchor="center", title_yanchor="top", title_y=0.9, title_x=0.5,
+                                      yaxis_range=[0, n_steps])
+
+    summary_plot = px.line(summary_df, title=summary_plot_title,
+                           labels={'value': summary_col, 'index': 'Timestep'} | custom_labels
+                           ).update_layout(title_xanchor="center", title_yanchor="top", title_y=0.9, title_x=0.5,
+                                           yaxis_range=[0, 1])
 
     return dead_points, summary_df, bar_plot, summary_plot
 

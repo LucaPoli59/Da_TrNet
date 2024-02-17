@@ -15,9 +15,10 @@ node_df, edge_df = graph_to_gdfs(graph)
 
 fig_style = {"margin": DEFAULT_MAPBOX_STYLE["margin"], "mapbox": DEFAULT_MAPBOX_STYLE["mapbox"]}
 
-plot_map_nodes = px.scatter_mapbox(node_df, lat="lat", lon="lon", size="degree",
+plot_map_nodes = px.scatter_mapbox(node_df, lat="lat", lon="lon",
                                    hover_data=["name", "degree", "centrality"],
                                    zoom=DEFAULT_MAPBOX_STYLE['mapbox']['zoom'], size_max=15,
+                                   color_continuous_scale="Bluered", size="degree", color="centrality",
                                    ).update_layout(fig_style)
 
 node_df_pretty = prettify_node_df(node_df.drop(columns=["geometry", "lon", "lat"])).drop(columns=["Boarding Cost"])

@@ -3,10 +3,24 @@ import os
 os.popen("pip install -r requirements.txt")
 
 from commons import *
+from urllib.request import urlretrieve
 
 for path in [DATA_PATH, GTFS_PATH_IT, GTFS_PATH_UK, GTFS_PATH_OTHER, APP_PATH, RESULTS_PATH, ATTACKS_PATH, USERS_PATH]:
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+df = pd.read_csv(os.path.join(DATA_PATH, "sources.csv")).set_index("mdb_source_id")
+
+ids_to_download = [1139]
+for id_to_download in ids_to_download:
+    path = os.path.join(GTFS_PATH_OTHER, f'{id_to_download}.zip')
+    if not os.path.exists(path):
+        try:
+            url = df.loc[id_to_download, "urls.direct_download"]
+            urlretrieve(url, path)
+        except:
+            print(f"Error downloading {id_to_download}, {df.loc[id_to_download, 'provider']}")
 
 graph = load_graph_from_feed()
 nodes_df, edges_df = graph_to_gdfs(graph)

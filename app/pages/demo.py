@@ -36,7 +36,12 @@ init_graph_stats_table = AgGrid(rowData=init_graph_stats.to_dict('records'),
 
 
 layout = dbc.Container(fluid=True, children=[
-    html.Center(html.H1("Demo", className="display-3 my-4")),
+    html.Div([
+        html.Center(html.H1("Demo", className="display-3")),
+        dmc.Slider(value=3, min=0, max=6, step=1, size="md", showLabelOnHover=True, id="map_plot_marker_size",
+                   style={"width": "60px"})
+    ], style={"position": "relative"}),
+
     html.Div(className="my-3", style={"position": "relative"}, children=[
         html.Div(dcc.Graph(id="map_plot", figure=init_map_plot, clear_on_unhover=True,
                            responsive=True, style={'height': '70vh'})),
@@ -74,8 +79,12 @@ layout = dbc.Container(fluid=True, children=[
         dbc.Toast(id="click_info_copy", header="Copied Information", is_open=False, dismissable=True,
                   className="position-absolute top-0 start-0 mt-5"),
 
+
+        dbc.Tooltip("Change marker size", target="map_plot_marker_size", placement="bottom",
+                    style={"font-size": "0.6rem"}),
+
         dbc.Toast(id="graph_notify", header="Notifica grafo", icon="info", is_open=False, dismissable=True,
-                  duration=3000, className="position-absolute top-0 start-0 mt-3 ms-3"),
+                  duration=3000, className="position-absolute top-0 start-0 mt-5 ms-3"),
         html.Div(className="d-flex position-absolute bottom-0 start-0 mb-3 ms-3", children=[
             dbc.Button("Reset Graph", id="reset_graph_btn", color="secondary", size="sm", outline=True, disabled=True,
                        className="me-2"),
@@ -85,7 +94,6 @@ layout = dbc.Container(fluid=True, children=[
                        className="me-2"),
             dbc.Tooltip("Remove selected elements", target="remove_elements",
                         placement="top", style={"font-size": "0.6rem"}),
-
             dbc.Button("Save Graph", id="save_graph_popover", color="secondary", size="sm", outline=True,
                        disabled=False),
             dbc.Tooltip("Save the graph to file", target="save_graph_popover",
@@ -97,6 +105,7 @@ layout = dbc.Container(fluid=True, children=[
 
         ]),
     ]),
+
 
     html.Center(html.H3("Caratteristiche generali del grafo"), className="my-5"),
     html.Div(className="my-2", id='graph_stats_table_div', children=[init_graph_stats_table]),
@@ -375,3 +384,15 @@ def load_attack_result(table_data, _):
     fig_full, fig_scaled = plot_attack_result(table_data, "Risultati attacco", cols_to_plot=cols_to_plot)
 
     return fig_full, fig_scaled
+
+
+@callback(Output("map_plot", "figure"),
+          Input("map_plot_marker_size", "value"), State('graph', 'data'),
+          State("map_box_relayout", "data"), prevent_initial_call=True)
+def change_marker_size_inc(marker_size_inc, graph_data, relayout_data):
+    graph = json_loads_graph_from_store(graph_data)
+    relayout_center, relayout_zoom = json.loads(relayout_data)["center"], json.loads(relayout_data)["zoom"]
+
+    _, _, map_fig = plot_graph_map(graph, nodes_marker_increment=marker_size_inc)
+    map_fig.update_layout(mapbox_center=relayout_center, mapbox_zoom=relayout_zoom)
+    return map_fig

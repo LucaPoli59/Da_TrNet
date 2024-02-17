@@ -52,7 +52,7 @@ layout = dbc.Container(className="fluid", children=[
     html.Center(html.H3("Distribuzione del grado dei nodi", className="mt-5")),
     html.Div(className="my-3", children=[
         dcc.Graph(figure=px.histogram(node_df, x='degree',
-                                      histfunc="count", histnorm='probability density', marginal="box"))
+                                      histfunc="count", histnorm='probability', marginal="box"))
     ]),
     html.Center(html.H3("Analisi Centrality metrics", className="mt-5")),
     html.Div(className="my-3", children=[

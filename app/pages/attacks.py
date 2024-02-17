@@ -14,7 +14,7 @@ n_steps = ATTACKS_STEPS
 nodes_lowerbound = ATTACKS_NODE_LOWERBOUND
 total_nodes = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph")).number_of_nodes()
 attacks_types = ["random", "centrality", "centrality_degree", "centrality_betweenness", "centrality_closeness",
-                 "centrality_eigenvector", "centrality_pagerank"]
+                 "centrality_eigenvector", "centrality_clustering", "centrality_pagerank"]
 attacks_results = {attack: pd.read_csv(os.path.join(ATTACKS_PATH, f"{attack}_{n_steps}.csv"), index_col=0)
                    for attack in attacks_types}
 
@@ -79,11 +79,13 @@ def update_summary_graphs(summary_col):
     def_threshold = 5
     threshold_abs = _threashold_pct_to_abs(def_threshold, summary_col)
 
-    title = f'Dead Timestep per ogni tipo di attacco con {sum_cols_opt[summary_col]["label"]}'
+    title_bar = f'Dead Timestep per ogni tipo di attacco con {sum_cols_opt[summary_col]["label"]}'
+    title_line = f'Variazione del parametro {sum_cols_opt[summary_col]["label"]} per ogni tipo di attacco'
 
     _, _, fig_bar, fig_line = attacks_results_summary(list(attacks_results.values()), summary_col=summary_col,
                                                       total_nodes=total_nodes, attack_nodes_lowerbound=nodes_lowerbound,
-                                                      n_steps=n_steps, title=title, threshold=threshold_abs)
+                                                      n_steps=n_steps, title=(title_bar, title_line),
+                                                      threshold=threshold_abs)
     return fig_bar, fig_line, def_threshold, threshold_abs
 
 
