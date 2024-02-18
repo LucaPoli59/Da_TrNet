@@ -1,0 +1,9 @@
+attack,dead_point,edges
+random,9,9
+centrality,2,2
+degree,2,2
+betweenness,2,2
+closeness,4,4
+eigenvector,3,3
+clustering,8,8
+pagerank,2,2
