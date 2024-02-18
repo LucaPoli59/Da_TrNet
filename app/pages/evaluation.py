@@ -7,6 +7,10 @@ import plotly.express as px
 from dash import html, dash_table, dcc, callback, Input, Output
 from dash_ag_grid import AgGrid
 
+
+import sys
+main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.append(main_dir)
 from commons import *
 
 graph_stats = pd.read_csv(os.path.join(RESULTS_PATH, "graph_stats.csv"), index_col="metric")

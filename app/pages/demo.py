@@ -12,6 +12,10 @@ import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
 
+
+import sys
+main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.append(main_dir)
 from commons import *
 
 init_graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph"))

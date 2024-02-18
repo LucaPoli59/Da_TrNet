@@ -8,6 +8,9 @@ import plotly.express as px
 from dash import html, dash_table, dcc, callback, Input, Output, State, dash
 from dash_ag_grid import AgGrid
 
+import sys
+main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.append(main_dir)
 from commons import *
 
 graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph"))

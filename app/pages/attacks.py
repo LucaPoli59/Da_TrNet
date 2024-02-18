@@ -8,7 +8,11 @@ import plotly.express as px
 from dash import html, dash_table, dcc, callback, Input, Output, State, dash, callback_context
 from dash_ag_grid import AgGrid
 
+import sys
+main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.append(main_dir)
 from commons import *
+
 
 n_steps = ATTACKS_STEPS
 nodes_lowerbound = ATTACKS_NODE_LOWERBOUND
