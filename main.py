@@ -1,7 +1,3 @@
-import os
-
-os.popen("pip install -r requirements.txt")
-
 from commons import *
 from urllib.request import urlretrieve
 
