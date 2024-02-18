@@ -18,6 +18,9 @@ for id_to_download in ids_to_download:
         except:
             print(f"Error downloading {id_to_download}, {df.loc[id_to_download, 'provider']}")
 
+
+# graph evaluation
+
 graph = load_graph_from_feed()
 nodes_df, edges_df = graph_to_gdfs(graph)
 
@@ -43,3 +46,21 @@ for col in cols:
 
 save_graph(graph, os.path.join(RESULTS_PATH, "graph"))
 save_graph(full_graph, os.path.join(RESULTS_PATH, "full_graph"))
+
+
+
+
+
+# graph attacks
+
+graph_full = load_graph_from_feed()
+_, node_df = evaluate_graph(graph_full)
+
+targets = ['random', 'centrality', 'centrality_degree', 'centrality_betweenness', 'centrality_closeness', 'centrality_eigenvector', 'centrality_clustering', 'centrality_pagerank']
+results = []
+
+for target in targets:
+    result = attack_graph(graph_in=graph_full, target=target)
+    results.append(result)
+    result.to_csv(os.path.join(ATTACKS_PATH, f'{target}_{ATTACKS_STEPS}.csv'))
+
