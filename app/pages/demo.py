@@ -110,8 +110,8 @@ layout = dbc.Container(fluid=True, children=[
     html.Center(html.H3("Caratteristiche generali del grafo"), className="my-5"),
     html.Div(className="my-2", id='graph_stats_table_div', children=[init_graph_stats_table]),
 
-    html.Center(html.H3("Manual Attack results"), className="my-5"),
-    html.Center(dbc.Button("Load Attack Results", id="load_attack_results", color="primary")),
+    html.Center(html.H3("Risultati attacco manuale"), className="my-5"),
+    html.Center(dbc.Button("Carica Risultati", id="load_attack_results", color="primary")),
     dcc.Loading(html.Div(className="my-2", children=[
         dcc.Graph(id="attack_results_full"), dcc.Graph(id="attack_result_scaled")]), type="circle"),
 

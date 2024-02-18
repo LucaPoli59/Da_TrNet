@@ -1,11 +1,13 @@
-pandas
-numpy
-plotly
-dash
-dash-bootstrap-components
-dash-mantine-components
+pandas~=2.1.4
+numpy~=1.26.3
+plotly~=5.18.0
+dash~=2.15.0
 
-networkx
-partridge
-osmnx
-fiona
+networkx~=3.1
+partridge~=1.1.2
+osmnx~=1.9.1
+fiona~=1.9.5
+diskcache~=5.6.3
+geopandas~=0.14.2
+shapely~=2.0.1
+pyproj~=3.6.1

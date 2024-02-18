@@ -417,15 +417,15 @@ def attacks_results_summary(results_list, summary_col='weak_GC', threshold=0.05,
 
     dead_points = dead_points.to_frame()
     dead_points.index.name = 'attack'
-    dead_points['edges'] = dead_points['dead_point'] * amount
+    dead_points['nodes'] = dead_points['dead_point'] * amount
 
     if save:
         summary_df.to_csv(os.path.join(ATTACKS_PATH, f'summary_df_{n_steps}.csv'))
         dead_points.to_csv(os.path.join(ATTACKS_PATH, f'summary_dps_{n_steps}.csv'))
 
-    bar_plot = px.bar(dead_points, x=dead_points.index, y='dead_point', hover_data='edges',
+    bar_plot = px.bar(dead_points, x=dead_points.index, y='dead_point', hover_data='nodes',
                       title=bar_plot_title,
-                      labels={'edges': 'Edges Removed', 'attack': 'Attack type', 'dead_point': 'Dead Timestep'
+                      labels={'nodes': 'Nodes Removed', 'attack': 'Attack type', 'dead_point': 'Dead Timestep'
                               } | custom_labels
                       ).update_layout(title_xanchor="center", title_yanchor="top", title_y=0.9, title_x=0.5,
                                       yaxis_range=[0, n_steps])
