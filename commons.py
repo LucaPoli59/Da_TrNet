@@ -15,7 +15,7 @@ import peartree as ptr
 
 PROJECT_PATH = os.path.dirname(os.getcwd())
 
-DATA_PATH = os.path.join(PROJECT_PATH, 'data')
+DATA_PATH = os.path.join(PROJECT_PATH, 'static', 'data')
 INPUT_PATH = os.path.join(DATA_PATH, 'input')
 GTFS_PATH_IT = os.path.join(DATA_PATH, 'gtfs_it')
 GTFS_PATH_UK = os.path.join(DATA_PATH, 'gtfs_uk')
