@@ -13,21 +13,17 @@ from plotly.subplots import make_subplots
 
 import peartree as ptr
 
-PROJECT_NAME = "DA_TrNet"
-PROJECT_PATH = os.getcwd()
-while os.path.basename(os.getcwd()) != PROJECT_NAME:
-    os.chdir("..")
-    PROJECT_PATH = os.getcwd()
+PROJECT_PATH = os.path.dirname(os.getcwd())
 
 DATA_PATH = os.path.join(PROJECT_PATH, 'data')
+INPUT_PATH = os.path.join(DATA_PATH, 'input')
 GTFS_PATH_IT = os.path.join(DATA_PATH, 'gtfs_it')
 GTFS_PATH_UK = os.path.join(DATA_PATH, 'gtfs_uk')
 GTFS_PATH_OTHER = os.path.join(DATA_PATH, 'gtfs_other')
 
-APP_PATH = os.path.join(PROJECT_PATH, "app")
-RESULTS_PATH = os.path.join(APP_PATH, 'data')
-ATTACKS_PATH = os.path.join(RESULTS_PATH, 'attacks')
-USERS_PATH = os.path.join(RESULTS_PATH, 'users')
+OUTPUT_PATH = os.path.join(DATA_PATH, "output")
+ATTACKS_PATH = os.path.join(OUTPUT_PATH, 'attacks')
+USERS_PATH = os.path.join(OUTPUT_PATH, 'users')
 
 EDGE_NAME_MID_TOKEN = "<-TO->"
 DEFAULT_MAPBOX_STYLE = dict(nodes=dict(size=4, color="#ec4540"), edges=dict(width=1, color="#697bf4"),

@@ -11,8 +11,8 @@ from commons import *
 
 dash.register_page(__name__, path="/evaluation", name="Graph Evaluation", title="Graph Evaluation", order=1, nav=True)
 
-graph_stats = pd.read_csv(os.path.join(RESULTS_PATH, "graph_stats.csv"), index_col="metric")
-graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph"))
+graph_stats = pd.read_csv(os.path.join(OUTPUT_PATH, "graph_stats.csv"), index_col="metric")
+graph = load_graph_from_file(os.path.join(OUTPUT_PATH, "full_graph"))
 node_df, edge_df = graph_to_gdfs(graph)
 centrality_columns = ['centrality_degree', 'centrality_betweenness', 'centrality_closeness', 'centrality_eigenvector',
                       "centrality_clustering", "centrality_pagerank"]

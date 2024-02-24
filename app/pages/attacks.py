@@ -14,7 +14,7 @@ dash.register_page(__name__, path="/attacks", name="Attacks Analysis", title="At
 
 n_steps = ATTACKS_STEPS
 nodes_lowerbound = ATTACKS_NODE_LOWERBOUND
-total_nodes = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph")).number_of_nodes()
+total_nodes = load_graph_from_file(os.path.join(OUTPUT_PATH, "full_graph")).number_of_nodes()
 attacks_types = ["random", "centrality", "centrality_degree", "centrality_betweenness", "centrality_closeness",
                  "centrality_eigenvector", "centrality_clustering", "centrality_pagerank"]
 attacks_results = {attack: pd.read_csv(os.path.join(ATTACKS_PATH, f"{attack}_{n_steps}.csv"), index_col=0)

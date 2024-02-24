@@ -14,7 +14,7 @@ from commons import *
 
 dash.register_page(__name__, path="/", name="Home", title="Home", is_index=True, order=0, nav=True)
 
-graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph"))
+graph = load_graph_from_file(os.path.join(OUTPUT_PATH, "full_graph"))
 node_df, edge_df = graph_to_gdfs(graph)
 
 fig_style = {"margin": DEFAULT_MAPBOX_STYLE["margin"], "mapbox": DEFAULT_MAPBOX_STYLE["mapbox"]}

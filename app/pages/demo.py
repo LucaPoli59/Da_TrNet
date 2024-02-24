@@ -15,7 +15,7 @@ from commons import *
 
 dash.register_page(__name__, path="/demo", name="Demo", title="Demo", order=3, nav=True)
 
-init_graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph"))
+init_graph = load_graph_from_file(os.path.join(OUTPUT_PATH, "full_graph"))
 init_node_df, init_edge_df, init_map_plot = plot_graph_map(init_graph)
 
 hover_tt_style = dict(className="px-1 py-0 rounded fs-6 lh-1",
@@ -25,7 +25,7 @@ graph_notify_delete = html.P("Elementi in rimozione, attendere...")
 graph_notify_reset = html.P("Grafo in reset, attendere...")
 graph_notify_save = html.P("Salvataggio grafo, attendere...")
 
-init_graph_stats = prettify_graph_stats(pd.read_csv(os.path.join(RESULTS_PATH, "graph_stats.csv"), index_col="metric"))
+init_graph_stats = prettify_graph_stats(pd.read_csv(os.path.join(OUTPUT_PATH, "graph_stats.csv"), index_col="metric"))
 
 init_graph_stats_table = AgGrid(rowData=init_graph_stats.to_dict('records'),
                                 columnDefs=[{'field': col} for col in init_graph_stats.columns],
