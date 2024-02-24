@@ -1,22 +1,19 @@
-import json
 import os
-import time
+import sys
 
 import dash
-import numpy as np
-import pandas as pd
-import plotly.express as px
-from dash import html, dash_table, dcc, callback, Input, Output, State, Patch
-from dash_ag_grid import AgGrid
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
+from dash import html, dcc, callback, Input, Output, State, Patch
+from dash_ag_grid import AgGrid
 from dash_iconify import DashIconify
+import dash
 
-
-import sys
 main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 sys.path.append(main_dir)
 from commons import *
+
+dash.register_page(__name__, path="/demo", name="Demo", title="Demo", order=3, nav=True)
 
 init_graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph"))
 init_node_df, init_edge_df, init_map_plot = plot_graph_map(init_graph)

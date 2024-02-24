@@ -1,17 +1,18 @@
 import os
+import sys
 
+import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-import numpy as np
-import pandas as pd
-import plotly.express as px
-from dash import html, dash_table, dcc, callback, Input, Output, State, dash
+from dash import html, dcc, callback, Input, Output
 from dash_ag_grid import AgGrid
 
-import sys
 main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 sys.path.append(main_dir)
 from commons import *
+
+
+dash.register_page(__name__, path="/", name="Home", title="Home", is_index=True, order=0, nav=True)
 
 graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph"))
 node_df, edge_df = graph_to_gdfs(graph)

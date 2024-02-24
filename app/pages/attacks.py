@@ -1,18 +1,16 @@
 import os
+import sys
 
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-import numpy as np
-import pandas as pd
-import plotly.express as px
-from dash import html, dash_table, dcc, callback, Input, Output, State, dash, callback_context
-from dash_ag_grid import AgGrid
+import dash
+from dash import html, dcc, callback, Input, Output, State, callback_context
 
-import sys
 main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 sys.path.append(main_dir)
 from commons import *
 
+dash.register_page(__name__, path="/attacks", name="Attacks Analysis", title="Attacks Analysis", order=2, nav=True)
 
 n_steps = ATTACKS_STEPS
 nodes_lowerbound = ATTACKS_NODE_LOWERBOUND

@@ -1,5 +1,6 @@
-from commons import *
 from urllib.request import urlretrieve
+
+from commons import *
 
 for path in [DATA_PATH, GTFS_PATH_IT, GTFS_PATH_UK, GTFS_PATH_OTHER, APP_PATH, RESULTS_PATH, ATTACKS_PATH, USERS_PATH]:
     if not os.path.exists(path):

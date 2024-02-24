@@ -1,19 +1,19 @@
-import pandas as pd
-import numpy as np
-import os
-import partridge as ptg
-import peartree as ptr
-import plotly.express as px
-import networkx as nx
-import datetime as dt
-import osmnx as ox
-from fiona.crs import CRS
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import json
+import os
 from io import StringIO
 
-PROJECT_NAME = "data_analytics2"
+import networkx as nx
+import numpy as np
+import osmnx as ox
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from fiona.crs import CRS
+from plotly.subplots import make_subplots
+
+import peartree as ptr
+
+PROJECT_NAME = "DA_TrNet"
 PROJECT_PATH = os.getcwd()
 while os.path.basename(os.getcwd()) != PROJECT_NAME:
     os.chdir("..")

@@ -1,17 +1,15 @@
 import os
+import sys
 
 import dash_bootstrap_components as dbc
-import numpy as np
-import pandas as pd
-import plotly.express as px
-from dash import html, dash_table, dcc, callback, Input, Output
-from dash_ag_grid import AgGrid
+import dash
+from dash import html, dcc
 
-
-import sys
 main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 sys.path.append(main_dir)
 from commons import *
+
+dash.register_page(__name__, path="/evaluation", name="Graph Evaluation", title="Graph Evaluation", order=1, nav=True)
 
 graph_stats = pd.read_csv(os.path.join(RESULTS_PATH, "graph_stats.csv"), index_col="metric")
 graph = load_graph_from_file(os.path.join(RESULTS_PATH, "full_graph"))
