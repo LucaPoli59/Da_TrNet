@@ -6,6 +6,7 @@ dash-bootstrap-components
 dash-mantine-components
 dash-ag-grid
 dash-iconify
+whitenoise
 
 networkx~=3.1
 partridge~=1.1.2
