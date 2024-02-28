@@ -6,7 +6,7 @@ import dash_mantine_components as dmc
 import dash
 from dash import html, dcc, callback, Input, Output, State, callback_context
 
-main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+main_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(main_dir)
 from commons import *
 

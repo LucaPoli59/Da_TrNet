@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 import dash
 from dash import html, dcc
 
-main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+main_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(main_dir)
 from commons import *
 

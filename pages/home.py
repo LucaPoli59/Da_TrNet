@@ -7,7 +7,7 @@ import dash_mantine_components as dmc
 from dash import html, dcc, callback, Input, Output
 from dash_ag_grid import AgGrid
 
-main_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+main_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(main_dir)
 from commons import *
 
