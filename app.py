@@ -5,7 +5,7 @@ import diskcache
 from dash import DiskcacheManager, html
 from whitenoise import WhiteNoise
 
-cache = diskcache.Cache("/.cache")
+cache = diskcache.Cache("cache")
 background_callback_manager = DiskcacheManager(cache)
 
 app = dash.Dash(__name__, use_pages=True,
