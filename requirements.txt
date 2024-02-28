@@ -8,13 +8,13 @@ fiona==1.9.5
 geopandas==0.14.2
 matplotlib==3.8.0
 networkx==3.1
-numpy==1.26.4
+numpy==1.26.3
+scipy==1.11.4
 osmnx==1.9.1
-pandas==2.2.1
+pandas==2.1.4
 partridge==1.1.2
 plotly==5.18.0
 pyproj==3.6.1
 shapely==2.0.1
 whitenoise==6.6.0
 gunicorn
-dash-tools
