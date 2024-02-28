@@ -13,7 +13,7 @@ from plotly.subplots import make_subplots
 
 import peartree as ptr
 
-PROJECT_PATH = os.path.dirname(os.getcwd())
+PROJECT_PATH = os.getcwd()
 
 DATA_PATH = os.path.join(PROJECT_PATH, 'static', 'data')
 INPUT_PATH = os.path.join(DATA_PATH, 'input')
